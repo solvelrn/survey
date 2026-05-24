@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>자동채점 서비스 수요 조사</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&display=swap');
+
+  :root{
+    --ink:#1a1c20;
+    --paper:#f6f3ec;
+    --card:#fffdf8;
+    --accent:#c4452f;     /* 채점 빨간펜 */
+    --accent-soft:#e8d4cc;
+    --line:#dcd6c8;
+    --muted:#6f6a5e;
+    --good:#3c6e47;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:'IBM Plex Sans KR',sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    line-height:1.6;
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(0,0,0,0.025) 1px, transparent 0);
+    background-size:22px 22px;
+  }
+
+  /* ---------- HEADER ---------- */
+  header{
+    max-width:760px;margin:0 auto;padding:64px 28px 30px;
+    position:relative;
+  }
+  .kicker{
+    font-size:.78rem;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--accent);font-weight:600;margin-bottom:14px;
+  }
+  header h1{
+    font-family:'Gowun Batang',serif;
+    font-size:2.5rem;line-height:1.25;font-weight:700;
+    letter-spacing:-.01em;
+  }
+  header h1 .pen{
+    position:relative;white-space:nowrap;
+  }
+  header h1 .pen::after{
+    content:"";position:absolute;left:-2%;right:-2%;bottom:.08em;height:.42em;
+    background:var(--accent);opacity:.22;border-radius:2px;z-index:-1;
+    transform:rotate(-.6deg);
+  }
+  header p.lede{
+    margin-top:20px;font-size:1.04rem;color:var(--muted);max-width:600px;
+  }
+  .meta-row{
+    display:flex;gap:22px;flex-wrap:wrap;margin-top:26px;
+    font-size:.85rem;color:var(--muted);
+  }
+  .meta-row span{display:flex;align-items:center;gap:7px;}
+  .meta-row b{color:var(--ink);font-weight:600;}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);}
+
+  /* ---------- PROGRESS ---------- */
+  .progress-wrap{
+    position:sticky;top:0;z-index:50;
+    background:rgba(246,243,236,.92);backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line);
+  }
+  .progress-inner{max-width:760px;margin:0 auto;padding:10px 28px;
+    display:flex;align-items:center;gap:14px;font-size:.8rem;color:var(--muted);}
+  .bar{flex:1;height:6px;background:var(--accent-soft);border-radius:99px;overflow:hidden;}
+  .bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .35s ease;}
+
+  /* ---------- FORM ---------- */
+  main{max-width:760px;margin:0 auto;padding:20px 28px 90px;}
+  .q{
+    background:var(--card);border:1px solid var(--line);
+    border-radius:14px;padding:28px 26px;margin-bottom:20px;
+    box-shadow:0 1px 0 rgba(0,0,0,.02), 0 14px 30px -22px rgba(0,0,0,.25);
+    position:relative;
+  }
+  .q-num{
+    font-family:'Gowun Batang',serif;
+    position:absolute;top:-13px;left:22px;
+    background:var(--ink);color:var(--paper);
+    font-size:.82rem;font-weight:700;
+    width:30px;height:30px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 10px -3px rgba(0,0,0,.4);
+  }
+  .q h3{font-size:1.12rem;font-weight:600;margin-bottom:4px;padding-right:10px;}
+  .q .hint{font-size:.86rem;color:var(--muted);margin-bottom:16px;}
+  .q .required{color:var(--accent);font-weight:700;margin-left:3px;}
+
+  .section-label{
+    font-size:.74rem;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--accent);font-weight:600;
+    margin:38px 4px 14px;display:flex;align-items:center;gap:10px;
+  }
+  .section-label::after{content:"";flex:1;height:1px;background:var(--line);}
+  .section-label:first-child{margin-top:8px;}
+
+  /* options */
+  .opt{
+    display:flex;align-items:flex-start;gap:12px;
+    padding:13px 15px;border:1px solid var(--line);border-radius:10px;
+    margin-bottom:9px;cursor:pointer;transition:all .15s ease;
+    background:#fff;
+  }
+  .opt:hover{border-color:var(--accent);background:#fffaf8;}
+  .opt input{margin-top:4px;accent-color:var(--accent);width:17px;height:17px;flex-shrink:0;cursor:pointer;}
+  .opt.checked{border-color:var(--accent);background:#fdf3f0;box-shadow:inset 0 0 0 1px var(--accent);}
+  .opt span{font-size:.96rem;}
+  .opt small{display:block;color:var(--muted);font-size:.82rem;margin-top:2px;}
+
+  /* scale */
+  .scale{display:flex;gap:7px;margin-top:6px;}
+  .scale label{
+    flex:1;text-align:center;border:1px solid var(--line);border-radius:9px;
+    padding:13px 4px;cursor:pointer;transition:all .15s ease;background:#fff;
+  }
+  .scale label:hover{border-color:var(--accent);}
+  .scale label.checked{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .scale label input{display:none;}
+  .scale .num{font-family:'Gowun Batang',serif;font-size:1.25rem;font-weight:700;display:block;}
+  .scale .lab{font-size:.7rem;line-height:1.3;display:block;margin-top:2px;}
+  .scale-ends{display:flex;justify-content:space-between;font-size:.76rem;color:var(--muted);margin-top:7px;}
+
+  textarea,input[type=text],select{
+    width:100%;font-family:inherit;font-size:.95rem;
+    border:1px solid var(--line);border-radius:9px;padding:12px 14px;
+    background:#fff;color:var(--ink);resize:vertical;
+  }
+  textarea:focus,input:focus,select:focus{outline:none;border-color:var(--accent);}
+  textarea{min-height:80px;}
+
+  /* consent box */
+  .gift-banner{
+    background:linear-gradient(135deg,#fdf3f0,#f9ece3);
+    border:1px solid var(--accent-soft);border-radius:12px;
+    padding:16px 18px;margin-bottom:16px;font-size:.92rem;
+  }
+  .gift-banner b{color:var(--accent);}
+  .gift-banner .big{font-family:'Gowun Batang',serif;font-size:1.05rem;display:block;margin-bottom:4px;}
+  .consent{
+    border:1px solid var(--line);border-radius:10px;background:#fff;
+    padding:14px 16px;margin:14px 0 6px;font-size:.84rem;color:var(--muted);
+  }
+  .consent ul{margin:8px 0 0 18px;}
+  .consent li{margin-bottom:3px;}
+  .consent-check{
+    display:flex;align-items:flex-start;gap:11px;margin-top:12px;
+    padding:12px 14px;border:1px solid var(--line);border-radius:9px;cursor:pointer;background:#fff;
+  }
+  .consent-check.checked{border-color:var(--accent);background:#fdf3f0;box-shadow:inset 0 0 0 1px var(--accent);}
+  .consent-check input{margin-top:3px;accent-color:var(--accent);width:17px;height:17px;flex-shrink:0;cursor:pointer;}
+  .consent-check span{font-size:.92rem;color:var(--ink);font-weight:500;}
+
+  /* compare block */
+  .compare{display:grid;grid-template-columns:1fr;gap:16px;}
+  .compare .card-opt{
+    border:1px solid var(--line);border-radius:12px;padding:18px;background:#fff;
+  }
+  .compare .card-opt h4{font-size:1rem;margin-bottom:4px;display:flex;align-items:center;gap:8px;}
+  .compare .card-opt .tag{
+    font-size:.7rem;background:var(--accent-soft);color:var(--accent);
+    padding:2px 8px;border-radius:99px;font-weight:600;
+  }
+  .compare .card-opt p{font-size:.85rem;color:var(--muted);margin-bottom:14px;}
+
+  /* submit */
+  .actions{margin-top:34px;text-align:center;}
+  button.submit{
+    font-family:inherit;font-size:1.02rem;font-weight:600;
+    background:var(--accent);color:#fff;border:none;
+    padding:16px 46px;border-radius:99px;cursor:pointer;
+    box-shadow:0 12px 26px -10px rgba(196,69,47,.7);
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  button.submit:hover{transform:translateY(-2px);box-shadow:0 16px 32px -10px rgba(196,69,47,.8);}
+  button.submit:active{transform:translateY(0);}
+  .save-note{font-size:.8rem;color:var(--muted);margin-top:14px;}
+
+  .err{border-color:var(--accent)!important;box-shadow:0 0 0 2px rgba(196,69,47,.18);}
+
+  /* thank you */
+  .thanks{
+    display:none;text-align:center;padding:70px 28px;max-width:560px;margin:0 auto;
+  }
+  .thanks.show{display:block;animation:fade .5s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+  .thanks .check{
+    width:74px;height:74px;border-radius:50%;background:var(--good);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 22px;
+  }
+  .thanks h2{font-family:'Gowun Batang',serif;font-size:1.8rem;margin-bottom:12px;}
+  .thanks p{color:var(--muted);}
+  .thanks button{
+    margin-top:26px;background:none;border:1px solid var(--line);color:var(--muted);
+    padding:10px 22px;border-radius:99px;cursor:pointer;font-family:inherit;font-size:.85rem;
+  }
+
+  /* admin results */
+  .admin-link{
+    position:fixed;bottom:16px;right:16px;font-size:.72rem;color:var(--muted);
+    background:var(--card);border:1px solid var(--line);padding:6px 12px;border-radius:99px;
+    cursor:pointer;z-index:60;text-decoration:none;
+  }
+  .admin-link:hover{border-color:var(--accent);color:var(--accent);}
+  #results{
+    display:none;max-width:760px;margin:0 auto;padding:40px 28px 80px;
+  }
+  #results.show{display:block;}
+  #results h2{font-family:'Gowun Batang',serif;font-size:1.8rem;margin-bottom:6px;}
+  #results .sub{color:var(--muted);margin-bottom:28px;font-size:.9rem;}
+  .res-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:22px;margin-bottom:16px;}
+  .res-card h4{font-size:.98rem;margin-bottom:14px;}
+  .res-bar{display:flex;align-items:center;gap:12px;margin-bottom:8px;font-size:.86rem;}
+  .res-bar .label{width:46%;color:var(--muted);}
+  .res-bar .track{flex:1;height:18px;background:var(--accent-soft);border-radius:6px;overflow:hidden;}
+  .res-bar .track i{display:block;height:100%;background:var(--accent);border-radius:6px;}
+  .res-bar .val{width:46px;text-align:right;font-weight:600;}
+  .res-actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px;}
+  .res-actions button{font-family:inherit;font-size:.85rem;padding:9px 18px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer;}
+  .res-actions button:hover{border-color:var(--accent);color:var(--accent);}
+  .res-empty{color:var(--muted);font-size:.9rem;padding:30px;text-align:center;border:1px dashed var(--line);border-radius:12px;}
+  .quote{font-size:.86rem;color:var(--ink);padding:10px 14px;border-left:3px solid var(--accent-soft);margin-bottom:8px;background:#fff;border-radius:0 8px 8px 0;}
+
+  @media(max-width:600px){
+    header h1{font-size:1.9rem;}
+    .scale{flex-wrap:wrap;}
+    .scale label{min-width:calc(20% - 6px);}
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-wrap">
+  <div class="progress-inner">
+    <span id="pct">0%</span>
+    <div class="bar"><i id="barfill"></i></div>
+    <span id="cnt" style="white-space:nowrap;">0 / 0</span>
+  </div>
+</div>
+
+<header>
+  <div class="kicker">학원 · 개인교습 대상 사전 수요 조사</div>
+  <h1>종이 시험지·문제집을<br><span class="pen">스캔하면 자동으로 채점</span>되는<br>서비스, 정말 필요하실까요?</h1>
+  <p class="lede">선생님들의 채점 부담을 덜어드릴 서비스를 준비하고 있습니다. 어떤 형태가 현장에 가장 잘 맞을지 직접 듣고 만들고 싶습니다. 솔직한 응답일수록 도움이 됩니다. (약 3분 소요)</p>
+  <div class="meta-row">
+    <span><i class="dot"></i> <b>3분</b> 소요</span>
+    <span><i class="dot"></i> 익명 응답 가능</span>
+    <span><i class="dot"></i> 개인정보 수집 안 함</span>
+  </div>
+</header>
+
+<main id="form">
+
+  <!-- ===== 응답자 ===== -->
+  <div class="section-label">먼저, 어떤 환경에서 가르치시나요</div>
+
+  <div class="q" data-q>
+    <div class="q-num">1</div>
+    <h3>현재 역할에 가장 가까운 것은?<span class="required">*</span></h3>
+    <div class="opts" data-radio="role">
+      <label class="opt"><input type="radio" name="role" value="학원 원장/운영자"><span>학원 원장 · 운영자</span></label>
+      <label class="opt"><input type="radio" name="role" value="학원 강사"><span>학원 소속 강사</span></label>
+      <label class="opt"><input type="radio" name="role" value="개인/공부방 교습"><span>개인과외 · 공부방 교습</span></label>
+      <label class="opt"><input type="radio" name="role" value="기타"><span>기타</span></label>
+    </div>
+  </div>
+
+  <div class="q" data-q>
+    <div class="q-num">2</div>
+    <h3>주로 가르치는 학생의 학교급은? <span class="hint" style="display:inline;font-weight:400;">(복수 선택 가능)</span><span class="required">*</span></h3>
+    <div class="opts" data-check="grade">
+      <label class="opt"><input type="checkbox" name="grade" value="초등"><span>초등학생</span></label>
+      <label class="opt"><input type="checkbox" name="grade" value="중등"><span>중학생</span></label>
+      <label class="opt"><input type="checkbox" name="grade" value="고등"><span>고등학생</span></label>
+      <label class="opt"><input type="checkbox" name="grade" value="N수/성인"><span>N수생 · 성인</span></label>
+    </div>
+  </div>
+
+  <div class="q" data-q>
+    <div class="q-num">3</div>
+    <h3>주로 가르치는 과목은? <span class="hint" style="display:inline;font-weight:400;">(복수 선택 가능)</span></h3>
+    <div class="opts" data-check="subject">
+      <label class="opt"><input type="checkbox" name="subject" value="수학"><span>수학</span></label>
+      <label class="opt"><input type="checkbox" name="subject" value="영어"><span>영어</span></label>
+      <label class="opt"><input type="checkbox" name="subject" value="국어"><span>국어</span></label>
+      <label class="opt"><input type="checkbox" name="subject" value="과학"><span>과학 · 사회</span></label>
+      <label class="opt"><input type="checkbox" name="subject" value="기타"><span>기타</span></label>
+    </div>
+  </div>
+
+  <div class="q" data-q>
+    <div class="q-num">4</div>
+    <h3>관리하는 학생 수는 대략?<span class="required">*</span></h3>
+    <div class="opts" data-radio="students">
+      <label class="opt"><input type="radio" name="students" value="~10명"><span>10명 이하</span></label>
+      <label class="opt"><input type="radio" name="students" value="11~30명"><span>11 ~ 30명</span></label>
+      <label class="opt"><input type="radio" name="students" value="31~80명"><span>31 ~ 80명</span></label>
+      <label class="opt"><input type="radio" name="students" value="80명 이상"><span>80명 이상</span></label>
+    </div>
+  </div>
+
+  <!-- ===== 현재 채점 실태 ===== -->
+  <div class="section-label">지금은 채점을 어떻게 하고 계신가요</div>
+
+  <div class="q" data-q>
+    <div class="q-num">5</div>
+    <h3>학생 숙제·문제집 채점, 지금은 주로 어떻게 처리하시나요?<span class="required">*</span></h3>
+    <div class="opts" data-radio="howscore">
+      <label class="opt"><input type="radio" name="howscore" value="선생님이 직접 손으로"><span>선생님이 일일이 손으로 채점</span></label>
+      <label class="opt"><input type="radio" name="howscore" value="학생 자가채점 후 확인"><span>학생이 자가채점하고 선생님이 확인</span></label>
+      <label class="opt"><input type="radio" name="howscore" value="조교/직원이 채점"><span>조교 · 직원이 채점</span></label>
+      <label class="opt"><input type="radio" name="howscore" value="기존 디지털 도구 사용"><span>이미 디지털 채점 도구를 쓰고 있음</span><small>어떤 도구인지 맨 아래에 적어주시면 큰 도움이 됩니다</small></label>
+    </div>
+  </div>
+
+  <div class="q" data-q>
+    <div class="q-num">6</div>
+    <h3>채점·오답 정리에 일주일에 쓰는 시간은 대략 얼마나 되나요?<span class="required">*</span></h3>
+    <div class="opts" data-radio="hours">
+      <label class="opt"><input type="radio" name="hours" value="1시간 미만"><span>1시간 미만</span></label>
+      <label class="opt"><input type="radio" name="hours" value="1~3시간"><span>1 ~ 3시간</span></label>
+      <label class="opt"><input type="radio" name="hours" value="3~6시간"><span>3 ~ 6시간</span></label>
+      <label class="opt"><input type="radio" name="hours" value="6시간 이상"><span>6시간 이상</span></label>
+    </div>
+  </div>
+
+  <div class="q" data-q>
+    <div class="q-num">7</div>
+    <h3>채점 업무가 지금 얼마나 부담스러우신가요?<span class="required">*</span></h3>
+    <p class="hint">솔직하게 답해주세요. 부담이 적다면 그것도 중요한 신호입니다.</p>
+    <div class="scale" data-scale="pain">
+      <label><input type="radio" name="pain" value="1"><span class="num">1</span><span class="lab">전혀<br>부담 없음</span></label>
+      <label><input type="radio" name="pain" value="2"><span class="num">2</span><span class="lab"></span></label>
+      <label><input type="radio" name="pain" value="3"><span class="num">3</span><span class="lab">보통</span></label>
+      <label><input type="radio" name="pain" value="4"><span class="num">4</span><span class="lab"></span></label>
+      <label><input type="radio" name="pain" value="5"><span class="num">5</span><span class="lab">매우<br>부담됨</span></label>
+    </div>
+  </div>
+
+  <!-- ===== 수요 검증 ===== -->
+  <div class="section-label">자동채점 서비스, 쓰실 생각이 있으신가요</div>
+
+  <div class="q" data-q>
+    <div class="q-num">8</div>
+    <h3>'스캔하면 자동으로 채점·집계되는 서비스'가 있다면 도입할 의향이 있으신가요?<span class="required">*</span></h3>
+    <div class="scale" data-scale="intent">
+      <label><input type="radio" name="intent" value="1"><span class="num">1</span><span class="lab">전혀<br>아니다</span></label>
+      <label><input type="radio" name="intent" value="2"><span class="num">2</span><span class="lab"></span></label>
+      <label><input type="radio" name="intent" value="3"><span class="num">3</span><span class="lab">중립</span></label>
+      <label><input type="radio" name="intent" value="4"><span class="num">4</span><span class="lab"></span></label>
+      <label><input type="radio" name="intent" value="5"><span class="num">5</span><span class="lab">꼭<br>쓰고싶다</span></label>
+    </div>
+  </div>
+
+  <!-- ===== 두 방향 비교 (핵심) ===== -->
+  <div class="section-label">두 가지 방식 — 각각 얼마나 쓰실 것 같나요</div>
+
+  <div class="q" data-q>
+    <div class="q-num">9</div>
+    <h3>두 가지 형태를 따로 평가해 주세요<span class="required">*</span></h3>
+    <p class="hint">"둘 중 뭐가 좋다"가 아니라, <b>각각</b> 실제로 쓸 것 같은 정도를 매겨주세요. 둘 다 높아도, 둘 다 낮아도 괜찮습니다.</p>
+
+    <div class="compare">
+      <div class="card-opt">
+        <h4><span class="tag">A 방식</span> 학생 제출형</h4>
+        <p>학생이 카카오톡·앱으로 숙제를 <b>찍어서 제출</b>하면, 자동으로 채점·분석·집계됩니다. 학생이 집에서도 제출할 수 있어요.</p>
+        <div class="scale" data-scale="wantA">
+          <label><input type="radio" name="wantA" value="1"><span class="num">1</span><span class="lab">안 쓸<br>것 같다</span></label>
+          <label><input type="radio" name="wantA" value="2"><span class="num">2</span><span class="lab"></span></label>
+          <label><input type="radio" name="wantA" value="3"><span class="num">3</span><span class="lab">보통</span></label>
+          <label><input type="radio" name="wantA" value="4"><span class="num">4</span><span class="lab"></span></label>
+          <label><input type="radio" name="wantA" value="5"><span class="num">5</span><span class="lab">자주<br>쓸 것</span></label>
+        </div>
+      </div>
+
+      <div class="card-opt">
+        <h4><span class="tag">B 방식</span> 학원 스테이션형</h4>
+        <p>학원 안에 <b>채점 스테이션</b>을 두고, 학생이 자기 문제집을 직접 스캔하면 채점 결과가 그 자리에서 집계됩니다. 기기가 학원에 있어요.</p>
+        <div class="scale" data-scale="wantB">
+          <label><input type="radio" name="wantB" value="1"><span class="num">1</span><span class="lab">안 쓸<br>것 같다</span></label>
+          <label><input type="radio" name="wantB" value="2"><span class="num">2</span><span class="lab"></span></label>
+          <label><input type="radio" name="wantB" value="3"><span class="num">3</span><span class="lab">보통</span></label>
+          <label><input type="radio" name="wantB" value="4"><span class="num">4</span><span class="lab"></span></label>
+          <label><input type="radio" name="wantB" value="5"><span class="num">5</span><span class="lab">자주<br>쓸 것</span></label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="q" data-q>
+    <div class="q-num">10</div>
+    <h3>굳이 하나를 먼저 만든다면, 어느 쪽부터 나오면 좋겠나요?<span class="required">*</span></h3>
+    <div class="opts" data-radio="prefer">
+      <label class="opt"><input type="radio" name="prefer" value="A 학생 제출형"><span>A · 학생이 찍어서 제출하는 방식</span></label>
+      <label class="opt"><input type="radio" name="prefer" value="B 학원 스테이션형"><span>B · 학원 스테이션에서 스캔하는 방식</span></label>
+      <label class="opt"><input type="radio" name="prefer" value="둘 다 비슷하게 필요"><span>둘 다 비슷하게 필요하다</span></label>
+      <label class="opt"><input type="radio" name="prefer" value="둘 다 별로"><span>솔직히 둘 다 끌리지 않는다</span></label>
+    </div>
+  </div>
+
+  <div class="q" data-q>
+    <div class="q-num">11</div>
+    <h3>자동채점이 된다면, 채점 외에 가장 받고 싶은 기능은? <span class="hint" style="display:inline;font-weight:400;">(최대 2개)</span></h3>
+    <div class="opts" data-check="feature" data-max="2">
+      <label class="opt"><input type="checkbox" name="feature" value="오답 자동 정리/오답노트"><span>오답 자동 정리 · 오답노트 생성</span></label>
+      <label class="opt"><input type="checkbox" name="feature" value="학생별 성취도 리포트"><span>학생별 성취도 · 취약 단원 리포트</span></label>
+      <label class="opt"><input type="checkbox" name="feature" value="학부모 자동 공유"><span>학부모에게 결과 자동 공유</span></label>
+      <label class="opt"><input type="checkbox" name="feature" value="진도/숙제 제출 관리"><span>숙제 제출 여부 · 진도 관리</span></label>
+      <label class="opt"><input type="checkbox" name="feature" value="유사문제 추천"><span>틀린 문제 기반 유사문제 추천</span></label>
+    </div>
+  </div>
+
+  <!-- ===== 지불 의향 ===== -->
+  <div class="section-label">현실적인 이야기 — 비용</div>
+
+  <div class="q" data-q>
+    <div class="q-num">12</div>
+    <h3>이 서비스가 충분히 잘 작동한다면, 월 얼마까지 지불할 의향이 있으신가요? <span class="hint" style="display:inline;font-weight:400;">(선택)</span></h3>
+    <p class="hint">학생 1인 기준이 아니라, 한 달 전체 이용료 기준으로 생각해 주세요.</p>
+    <div class="opts" data-radio="price">
+      <label class="opt"><input type="radio" name="price" value="무료만"><span>무료라면 쓰겠지만 유료면 안 쓴다</span></label>
+      <label class="opt"><input type="radio" name="price" value="~3만원"><span>월 3만 원 이하</span></label>
+      <label class="opt"><input type="radio" name="price" value="3~7만원"><span>월 3 ~ 7만 원</span></label>
+      <label class="opt"><input type="radio" name="price" value="7~15만원"><span>월 7 ~ 15만 원</span></label>
+      <label class="opt"><input type="radio" name="price" value="15만원 이상"><span>월 15만 원 이상도 가능</span></label>
+    </div>
+  </div>
+
+  <div class="q" data-q>
+    <div class="q-num">13</div>
+    <h3>도입을 망설이게 하는 가장 큰 걱정은? <span class="hint" style="display:inline;font-weight:400;">(최대 2개)</span></h3>
+    <div class="opts" data-check="concern" data-max="2">
+      <label class="opt"><input type="checkbox" name="concern" value="채점 정확도"><span>자동채점의 정확도를 믿기 어렵다</span></label>
+      <label class="opt"><input type="checkbox" name="concern" value="학생/기기 사용 번거로움"><span>학생이나 기기 사용이 번거로울 것 같다</span></label>
+      <label class="opt"><input type="checkbox" name="concern" value="비용"><span>비용 대비 효과가 의문이다</span></label>
+      <label class="opt"><input type="checkbox" name="concern" value="다양한 문제집 인식"><span>우리가 쓰는 다양한 문제집을 인식할까</span></label>
+      <label class="opt"><input type="checkbox" name="concern" value="개인정보/학부모 반응"><span>개인정보 · 학부모 반응이 걱정된다</span></label>
+      <label class="opt"><input type="checkbox" name="concern" value="별로 없다"><span>특별히 걱정은 없다</span></label>
+    </div>
+  </div>
+
+  <!-- ===== 자유 + 연락처 ===== -->
+  <div class="section-label">마지막으로</div>
+
+  <div class="q" data-q>
+    <div class="q-num">14</div>
+    <h3>채점·숙제 관리에서 가장 불편한 점이나, 꼭 있었으면 하는 기능을 자유롭게 적어주세요.</h3>
+    <p class="hint">한 줄이라도 좋습니다. 가장 큰 힌트가 되는 부분입니다.</p>
+    <textarea name="freetext" placeholder="예) 학생마다 문제집이 달라서 채점지를 따로 만드는 게 제일 힘들어요..."></textarea>
+  </div>
+
+  <div class="q" data-q>
+    <div class="q-num">15</div>
+    <h3>끝까지 참여해 주셔서 감사합니다 ☕</h3>
+    <div class="gift-banner">
+      <span class="big">정성껏 끝까지 응답해 주신 <b>50분께 메가커피 기프티콘</b>을 보내드립니다.</span>
+      아래에 개인정보 활용에 동의하시고 연락처를 남겨주신 분 중 <b>50분</b>을 선정해 증정합니다. 동의는 선택이며, 동의하지 않으셔도 설문은 정상적으로 제출됩니다.
+    </div>
+
+    <input type="text" name="contact" placeholder="기프티콘 받을 휴대폰 번호 또는 카카오 ID" style="margin-bottom:10px;">
+    <input type="text" name="contact_name" placeholder="성함 또는 학원명 (선택)">
+
+    <div class="consent">
+      <b style="color:var(--ink);">개인정보 수집·이용 안내</b>
+      <ul>
+        <li>수집 항목: 연락처(휴대폰 번호 또는 카카오 ID), 성함/학원명(선택)</li>
+        <li>이용 목적: 메가커피 기프티콘 발송, 베타 서비스 출시 안내</li>
+        <li>보유 기간: 목적 달성 후 또는 동의 철회 시까지 (최대 6개월)</li>
+        <li>동의를 거부하실 수 있으며, 이 경우 기프티콘 증정 대상에서 제외됩니다.</li>
+      </ul>
+    </div>
+    <label class="consent-check" id="consentWrap">
+      <input type="checkbox" name="consent" value="동의">
+      <span>위 개인정보 수집·이용에 동의하며, 기프티콘 추첨에 응모합니다. (선택)</span>
+    </label>
+  </div>
+
+  <div class="actions">
+    <button class="submit" id="submitBtn">설문 제출하기</button>
+    <p class="save-note">응답은 이 브라우저에 저장되며, 우측 하단에서 모아 볼 수 있습니다.</p>
+  </div>
+</main>
+
+<!-- thank you -->
+<div class="thanks" id="thanks">
+  <div class="check">✓</div>
+  <h2>소중한 응답 감사합니다</h2>
+  <p>선생님의 답변은 현장에 꼭 맞는 서비스를 만드는 데 그대로 반영됩니다.<br>베타 초대를 신청하셨다면, 준비되는 대로 가장 먼저 연락드리겠습니다.</p>
+  <button onclick="location.reload()">새 응답 작성하기</button>
+</div>
+
+<!-- admin results -->
+<div id="results">
+  <h2>응답 집계</h2>
+  <p class="sub">이 브라우저에 저장된 응답을 요약해 보여줍니다. CSV로 내려받아 분석하실 수 있어요.</p>
+  <div class="res-actions">
+    <button onclick="exportCSV()">CSV 내려받기</button>
+    <button onclick="exportJSON()">원본 JSON 내려받기</button>
+    <button onclick="clearData()">데이터 비우기</button>
+    <button onclick="hideResults()">← 설문으로 돌아가기</button>
+  </div>
+  <div id="resBody"></div>
+</div>
+
+<a class="admin-link" onclick="showResults()">📊 응답 모아보기</a>
+
+<script>
+const STORE_KEY = 'grading_survey_responses_v1';
+
+// ===== 구글 시트 연결 =====
+// 아래 따옴표 안에, 본인이 배포한 Apps Script 웹앱 URL을 붙여넣으세요.
+// (설정 방법은 함께 드린 "구글시트_연결_가이드"를 참고하세요)
+// 비워두면 시트 전송 없이 이 브라우저에만 저장됩니다.
+const SHEET_ENDPOINT = 'https://script.google.com/macros/s/AKfycby3FGKAle1RruchHhgyfBULkzMuxwkFflyLNGdESpFKE9dBrf0CnBnzVTWsCPiMFldYVA/exec';
+
+const responses = () => { try{return JSON.parse(localStorage.getItem(STORE_KEY))||[]}catch(e){return[]} };
+const save = (arr) => localStorage.setItem(STORE_KEY, JSON.stringify(arr));
+
+// ---- interaction: highlight selected ----
+document.addEventListener('change', e=>{
+  const inp = e.target;
+  if(inp.type==='radio'){
+    // clear group highlight
+    document.querySelectorAll(`[name="${inp.name}"]`).forEach(r=>{
+      const wrap=r.closest('.opt')||r.closest('label');
+      if(wrap) wrap.classList.remove('checked');
+    });
+    const w=inp.closest('.opt')||inp.closest('label');
+    if(w) w.classList.add('checked');
+  }
+  if(inp.type==='checkbox'){
+    if(inp.name==='consent'){
+      document.getElementById('consentWrap').classList.toggle('checked',inp.checked);
+      return;
+    }
+    const group=inp.closest('[data-check]');
+    const max=group?parseInt(group.dataset.max||'99'):99;
+    const checked=group?group.querySelectorAll('input:checked'):[];
+    if(checked.length>max){ inp.checked=false; }
+    const w=inp.closest('.opt'); if(w) w.classList.toggle('checked',inp.checked);
+  }
+  updateProgress();
+});
+
+// ---- progress ----
+function updateProgress(){
+  const required=['role','students','howscore','hours','pain','intent','wantA','wantB','prefer'];
+  let done=0;
+  required.forEach(n=>{ if(document.querySelector(`[name="${n}"]:checked`)) done++; });
+  // 학교급(체크박스 필수)
+  const total=required.length+1;
+  if(document.querySelector('[name="grade"]:checked')) done++;
+  const pct=Math.round(done/total*100);
+  document.getElementById('barfill').style.width=pct+'%';
+  document.getElementById('pct').textContent=pct+'%';
+  document.getElementById('cnt').textContent=done+' / '+total;
+}
+
+// ---- submit ----
+document.getElementById('submitBtn').addEventListener('click',async ()=>{
+  const required=['role','students','howscore','hours','pain','intent','wantA','wantB','prefer'];
+  let firstErr=null;
+  document.querySelectorAll('.q').forEach(q=>q.classList.remove('err'));
+  for(const n of required){
+    if(!document.querySelector(`[name="${n}"]:checked`)){
+      const el=document.querySelector(`[name="${n}"]`).closest('.q');
+      el.classList.add('err');
+      if(!firstErr) firstErr=el;
+    }
+  }
+  // 학교급(체크박스) 필수
+  if(!document.querySelector('[name="grade"]:checked')){
+    const el=document.querySelector('[name="grade"]').closest('.q');
+    el.classList.add('err');
+    if(!firstErr) firstErr=el;
+  }
+  if(firstErr){
+    firstErr.scrollIntoView({behavior:'smooth',block:'center'});
+    return;
+  }
+  const data={ts:new Date().toISOString()};
+  ['role','students','howscore','hours','pain','intent','wantA','wantB','prefer','price'].forEach(n=>{
+    const c=document.querySelector(`[name="${n}"]:checked`); data[n]=c?c.value:'';
+  });
+  ['subject','feature','concern','grade'].forEach(n=>{
+    data[n]=[...document.querySelectorAll(`[name="${n}"]:checked`)].map(c=>c.value).join(' | ');
+  });
+  data.freetext=document.querySelector('[name="freetext"]').value.trim();
+  data.contact=document.querySelector('[name="contact"]').value.trim();
+  data.contact_name=document.querySelector('[name="contact_name"]').value.trim();
+  data.consent=document.querySelector('[name="consent"]').checked?'동의':'';
+
+  // 연락처를 적었는데 동의 체크가 없으면 안내 (개인정보 보호)
+  if(data.contact && !data.consent){
+    const el=document.getElementById('consentWrap').closest('.q');
+    el.classList.add('err');
+    el.scrollIntoView({behavior:'smooth',block:'center'});
+    alert('기프티콘 발송을 위해 연락처를 남기시려면 개인정보 활용 동의에 체크해 주세요.\n(동의 없이 제출하시려면 연락처를 비워주세요.)');
+    return;
+  }
+  // 동의 없이 제출하는 경우, 연락처는 저장하지 않음 (개인정보 최소수집)
+  if(!data.consent){ data.contact=''; data.contact_name=''; }
+
+  // 로컬 백업 저장 (항상)
+  const arr=responses(); arr.push(data); save(arr);
+
+  // 구글 시트 전송
+  const btn=document.getElementById('submitBtn');
+  if(SHEET_ENDPOINT){
+    btn.disabled=true; btn.textContent='제출 중...';
+    try{
+      await fetch(SHEET_ENDPOINT,{
+        method:'POST',
+        mode:'no-cors',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify(data)
+      });
+    }catch(e){ /* no-cors라 결과 확인 불가, 로컬 백업이 있으니 진행 */ }
+  }
+
+  document.getElementById('form').style.display='none';
+  document.querySelector('header').style.display='none';
+  document.querySelector('.progress-wrap').style.display='none';
+  document.getElementById('thanks').classList.add('show');
+  window.scrollTo({top:0,behavior:'smooth'});
+});
+
+// ---- results ----
+function showResults(){
+  const r=responses();
+  const body=document.getElementById('resBody');
+  if(r.length===0){ body.innerHTML='<div class="res-empty">아직 저장된 응답이 없습니다.</div>'; }
+  else{
+    body.innerHTML='';
+    const card=(title,inner)=>`<div class="res-card"><h4>${title} <span style="color:var(--muted);font-weight:400;font-size:.82rem;">· 응답 ${r.length}건</span></h4>${inner}</div>`;
+    const dist=(field,labels)=>{
+      const counts={}; labels.forEach(l=>counts[l]=0);
+      r.forEach(x=>{ if(x[field]!==undefined&&x[field]!=='') counts[x[field]]=(counts[x[field]]||0)+1; });
+      const max=Math.max(1,...Object.values(counts));
+      return Object.entries(counts).map(([k,v])=>{
+        const pc=Math.round(v/r.length*100);
+        return `<div class="res-bar"><span class="label">${k}</span><span class="track"><i style="width:${v/max*100}%"></i></span><span class="val">${v} (${pc}%)</span></div>`;
+      }).join('');
+    };
+    const avg=(field)=>{
+      const nums=r.map(x=>parseFloat(x[field])).filter(n=>!isNaN(n));
+      return nums.length?(nums.reduce((a,b)=>a+b,0)/nums.length).toFixed(2):'-';
+    };
+    body.innerHTML+=card('도입 의향 평균 (5점)', `<div class="res-bar"><span class="label">전체 평균</span><span class="track"><i style="width:${avg('intent')/5*100}%"></i></span><span class="val">${avg('intent')}</span></div>`);
+    body.innerHTML+=card('A 학생제출형 vs B 스테이션형 — 사용의향 평균(5점)',
+      `<div class="res-bar"><span class="label">A · 학생 제출형</span><span class="track"><i style="width:${avg('wantA')/5*100}%"></i></span><span class="val">${avg('wantA')}</span></div>
+       <div class="res-bar"><span class="label">B · 스테이션형</span><span class="track"><i style="width:${avg('wantB')/5*100}%"></i></span><span class="val">${avg('wantB')}</span></div>`);
+
+    // ----- 역할별 분리 집계 (학원장 vs 개인교습) -----
+    const segAvg=(field,filterFn)=>{
+      const nums=r.filter(filterFn).map(x=>parseFloat(x[field])).filter(n=>!isNaN(n));
+      return nums.length?(nums.reduce((a,b)=>a+b,0)/nums.length).toFixed(2):null;
+    };
+    const segs=[
+      {name:'학원 (원장+강사)', fn:x=>x.role==='학원 원장/운영자'||x.role==='학원 강사'},
+      {name:'개인/공부방 교습', fn:x=>x.role==='개인/공부방 교습'}
+    ];
+    let segHtml='';
+    segs.forEach(s=>{
+      const n=r.filter(s.fn).length;
+      if(!n){ segHtml+=`<div class="res-bar"><span class="label"><b>${s.name}</b> (0건)</span><span class="track"></span><span class="val">-</span></div>`; return; }
+      const intent=segAvg('intent',s.fn), wa=segAvg('wantA',s.fn), wb=segAvg('wantB',s.fn);
+      segHtml+=`<div style="margin:14px 0 6px;font-weight:600;font-size:.9rem;">${s.name} <span style="color:var(--muted);font-weight:400;">· ${n}건</span></div>`;
+      segHtml+=`<div class="res-bar"><span class="label">도입 의향</span><span class="track"><i style="width:${intent/5*100}%"></i></span><span class="val">${intent}</span></div>`;
+      segHtml+=`<div class="res-bar"><span class="label">A · 학생 제출형</span><span class="track"><i style="width:${wa/5*100}%"></i></span><span class="val">${wa}</span></div>`;
+      segHtml+=`<div class="res-bar"><span class="label">B · 스테이션형</span><span class="track"><i style="width:${wb/5*100}%"></i></span><span class="val">${wb}</span></div>`;
+    });
+    body.innerHTML+=card('🔍 역할별 비교 — 수요와 방향이 집단마다 다른가', segHtml);
+    body.innerHTML+=card('먼저 원하는 방향', dist('prefer',['A 학생 제출형','B 학원 스테이션형','둘 다 비슷하게 필요','둘 다 별로']));
+
+    // 우려사항 (다중선택 분해 집계)
+    const multiCount=(field)=>{
+      const counts={};
+      r.forEach(x=>{ (x[field]||'').split(' | ').filter(Boolean).forEach(v=>counts[v]=(counts[v]||0)+1); });
+      const entries=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+      if(!entries.length) return '<div style="color:var(--muted);font-size:.86rem;">응답 없음</div>';
+      const max=Math.max(1,...entries.map(e=>e[1]));
+      return entries.map(([k,v])=>`<div class="res-bar"><span class="label">${k}</span><span class="track"><i style="width:${v/max*100}%"></i></span><span class="val">${v} (${Math.round(v/r.length*100)}%)</span></div>`).join('');
+    };
+    body.innerHTML+=card('도입 걸림돌·우려사항', multiCount('concern'));
+    body.innerHTML+=card('채점 부담도 평균 (5점)', `<div class="res-bar"><span class="label">전체 평균</span><span class="track"><i style="width:${avg('pain')/5*100}%"></i></span><span class="val">${avg('pain')}</span></div>`);
+    body.innerHTML+=card('역할', dist('role',['학원 원장/운영자','학원 강사','개인/공부방 교습','기타']));
+    body.innerHTML+=card('가르치는 학교급', multiCount('grade'));
+    body.innerHTML+=card('지불 의향', dist('price',['무료만','~3만원','3~7만원','7~15만원','15만원 이상']));
+    const texts=r.filter(x=>x.freetext).map(x=>`<div class="quote">${x.freetext.replace(/</g,'&lt;')}</div>`).join('');
+    if(texts) body.innerHTML+=card('자유 응답', texts);
+  }
+  document.getElementById('form').style.display='none';
+  document.querySelector('header').style.display='none';
+  document.querySelector('.progress-wrap').style.display='none';
+  document.getElementById('thanks').classList.remove('show');
+  document.getElementById('results').classList.add('show');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function hideResults(){ location.reload(); }
+function clearData(){ if(confirm('저장된 모든 응답을 삭제할까요?')){ localStorage.removeItem(STORE_KEY); showResults(); } }
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(responses(),null,2)],{type:'application/json'});
+  dl(blob,'survey_responses.json');
+}
+function exportCSV(){
+  const r=responses(); if(!r.length){alert('응답이 없습니다.');return;}
+  const cols=['ts','role','grade','subject','students','howscore','hours','pain','intent','wantA','wantB','prefer','feature','price','concern','freetext','consent','contact','contact_name'];
+  const esc=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+  const csv=[cols.join(',')].concat(r.map(x=>cols.map(c=>esc(x[c])).join(','))).join('\n');
+  dl(new Blob(['\ufeff'+csv],{type:'text/csv'}),'survey_responses.csv');
+}
+function dl(blob,name){
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();
+}
+updateProgress();
+</script>
+</body>
+</html>
