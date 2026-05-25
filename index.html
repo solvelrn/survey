@@ -518,7 +518,7 @@ const STORE_KEY = 'grading_survey_responses_v1';
 // 아래 따옴표 안에, 본인이 배포한 Apps Script 웹앱 URL을 붙여넣으세요.
 // (설정 방법은 함께 드린 "구글시트_연결_가이드"를 참고하세요)
 // 비워두면 시트 전송 없이 이 브라우저에만 저장됩니다.
-const SHEET_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwby7yVEgK8RJ__RLEcUKtOF4eW47HBwGS2Iky6hY6LUb1-E-UuG8mXlZnCqvNxHUTE/exec';
+const SHEET_ENDPOINT = 'https://script.google.com/macros/s/AKfycbw4MPTyLW0_5SWUXfaxpNf-bQg26xU7ndu06zMK8ar6lVV5-e403DeycKhV6RwDPVwv/exec';
 
 const responses = () => { try{return JSON.parse(localStorage.getItem(STORE_KEY))||[]}catch(e){return[]} };
 const save = (arr) => localStorage.setItem(STORE_KEY, JSON.stringify(arr));
